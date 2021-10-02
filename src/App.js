@@ -71,6 +71,17 @@ class App extends React.Component {
             this.db.mutationCreateList(newList);
         });
     }
+    renameItem = (key, newName) => {
+        //Find the one to remove (Copying stuff)
+        let newCurrentList = [...this.state.currentList]
+        //Rename the item
+        for (let i = 0; i < newCurrentList.length; i++){
+            if (key === i){
+                newCurrentList[i] = newName;
+            }
+        }
+        //Add an undoable transaciton
+    }
     renameList = (key, newName) => {
         let newKeyNamePairs = [...this.state.sessionData.keyNamePairs];
         // NOW GO THROUGH THE ARRAY AND FIND THE ONE TO RENAME
@@ -114,6 +125,7 @@ class App extends React.Component {
             // ANY AFTER EFFECTS?
         });
     }
+
     // THIS FUNCTION BEGINS THE PROCESS OF CLOSING THE CURRENT LIST
     closeCurrentList = () => {
         this.setState(prevState => ({

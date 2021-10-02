@@ -23,7 +23,7 @@ export default class Workspace extends React.Component {
                         <div className="item-number">5.</div>
                     </div>
                     <div id="edit-items">
-                        {currentList ? currentList.items.map((item) => (<Item key={item} itemName={item} />)) : null } 
+                        {currentList ? currentList.items.map((item,index) => (<Item key={index} itemName={item} />)) : null } 
                         {/* {currentList ? console.log(currentList.items) : null }  */}
                     </div>
 
