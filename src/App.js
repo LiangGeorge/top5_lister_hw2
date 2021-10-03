@@ -10,6 +10,8 @@ import Banner from './components/Banner.js'
 import Sidebar from './components/Sidebar.js'
 import Workspace from './components/Workspace.js';
 import Statusbar from './components/Statusbar.js'
+import ChangeItemTransaction from './transactions/ChangeItem_Transaction.js'
+import MoveItemTransaction from './transactions/MoveItem_Transaction.js'
 
 class App extends React.Component {
     constructor(props) {
@@ -76,6 +78,34 @@ class App extends React.Component {
             this.db.mutationCreateList(newList);
         });
     }
+    renameItemRegular = (key,text) => {
+        let newCurrentListItems = [...this.state.currentList.items]
+            //Rename the item
+            for (let i = 0; i < newCurrentListItems.length; i++){
+                //console.log(key)
+                if (key === i){
+                    newCurrentListItems[i] = text;
+                }
+            }
+
+            this.setState(prevState => ({
+                currentList: {
+                    ...prevState.currentList,
+                    items: newCurrentListItems, 
+                },
+                sessionData: prevState.sessionData
+            }),() => {
+                //Make sure changes are saved to Local Storage 
+                let list = this.db.queryGetList(this.state.currentList.key)
+                //console.log(list)
+                list.items = newCurrentListItems
+                this.db.mutationUpdateList(list)
+                //Don't touch session data because it should be the same
+                //console.log(this.state)
+                
+            })
+            
+    }
     renameItemCallback = (key, newName, oldName) => {
         //Find the one to remove (Copying stuff)
         if (newName !== oldName){
@@ -100,14 +130,18 @@ class App extends React.Component {
             }),() => {
                 //Make sure changes are saved to Local Storage 
                 let list = this.db.queryGetList(this.state.currentList.key)
-                console.log(list)
+                //console.log(list)
                 list.items = newCurrentListItems
                 this.db.mutationUpdateList(list)
                 //Don't touch session data because it should be the same
                 //console.log(this.state)
+                //Add an undoable transaction
+                let renameTransaction = new ChangeItemTransaction(this.renameItemRegular,key,oldName,newName);
+                this.tps.addTransaction(renameTransaction);
+                console.log(this.tps)
             })
             
-            //Add an undoable transaciton
+            
         }
     }
 
@@ -139,14 +173,21 @@ class App extends React.Component {
             currentListOverItem: null
         }))
     }
-
+    itemSpliceIntoPlace = (oldIndex,targetIndex) =>{
+        let newCurrentListItems = [...this.state.currentList.items];
+        //Remove the element that we are currently Holding
+        let removedArray = newCurrentListItems.splice(oldIndex,1);
+        newCurrentListItems.splice(targetIndex,0,removedArray[0]);
+        return newCurrentListItems;
+    }
     itemDropCallback = () =>{
         if (this.state.currentListHeldItem !== this.state.currentListOverItem){
-            let newCurrentListItems = [...this.state.currentList.items];
-            //Remove the element that we are currently Holding
-            let removedArray = newCurrentListItems.splice(this.state.currentListHeldItem,1);
-            //Replace at the position of where it's being held over 
-            newCurrentListItems.splice(this.state.currentListOverItem,0,removedArray[0]);
+            let newCurrentListItems = this.itemSpliceIntoPlace(this.state.currentListHeldItem,this.state.currentListOverItem)
+            // let newCurrentListItems = [...this.state.currentList.items];
+            // //Remove the element that we are currently Holding
+            // let removedArray = newCurrentListItems.splice(this.state.currentListHeldItem,1);
+            // //Replace at the position of where it's being held over 
+            // newCurrentListItems.splice(this.state.currentListOverItem,0,removedArray[0]);
             this.setState(prevState => ({
                 currentList: {
                     ...prevState.currentList,
@@ -165,6 +206,9 @@ class App extends React.Component {
 
                 //Don't touch session data because it should be the same
                 //console.log(this.state)
+                let moveTransaction = new MoveItemTransaction(this.renameItemRegular,this.state.currentListHeldItem,this.state.currentListOverItem);
+                this.tps.addTransaction(moveTransaction);
+                console.log(this.tps)
             })
         }
 
@@ -200,6 +244,7 @@ class App extends React.Component {
             list.name = newName;
             this.db.mutationUpdateList(list);
             this.db.mutationUpdateSessionData(this.state.sessionData);
+            this.tps.clearAllTransactions();
         });
     }
     // THIS FUNCTION BEGINS THE PROCESS OF LOADING A LIST FOR EDITING
@@ -249,7 +294,7 @@ class App extends React.Component {
 
     executeDelete = () =>{
         let newKeyNamePairs = [...this.state.sessionData.keyNamePairs];
-        console.log(this.state.listToDelete)
+        //console.log(this.state.listToDelete)
         let indexToRemove = null;
         
         for (let i = 0; i < newKeyNamePairs.length; i++) {
