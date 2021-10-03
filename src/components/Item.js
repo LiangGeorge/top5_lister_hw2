@@ -14,6 +14,7 @@ export default class Item extends React.Component{
     }
     
     handleOnDrag = (event,itemNum) =>{
+        
         event.preventDefault();
         event.stopPropagation();
         //console.log("Holding Item: " + itemNum);
@@ -30,6 +31,7 @@ export default class Item extends React.Component{
 
     }
     handleOnDrop = (event)=>{
+        this.props.toggleDisableButtonsCallback();
         event.preventDefault();
         event.stopPropagation();
         //console.log("Dropped");
@@ -44,6 +46,7 @@ export default class Item extends React.Component{
         this.handleToggleEdit();
     }
     handleToggleEdit = () =>{
+        this.props.toggleDisableButtonsCallback();
         this.setState({
             editActive: !this.state.editActive
         })
@@ -102,6 +105,7 @@ export default class Item extends React.Component{
                     onDoubleClick={()=>this.handleDoubleClick()}
                     onDrag={(e)=>this.handleOnDrag(e,this.props.itemNum)}
                     onDragOver={(e) => this.handleOnDragOver(e,this.props.itemNum)}
+                    onDragStart={() => this.props.toggleDisableButtonsCallback()}
                     >
                     {this.props.itemName}
                     </div>

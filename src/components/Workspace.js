@@ -12,6 +12,7 @@ export default class Workspace extends React.Component {
             currentListOverItem,
             itemDropCallback,
             currentListHeldItem,
+            toggleDisableButtonsCallback,
         } = this.props
         return (
             <div id="top5-workspace">
@@ -42,6 +43,7 @@ export default class Workspace extends React.Component {
                         itemDragOverCallback={itemDragOverCallback}
                         itemDragLeaveCallback={itemDragLeaveCallback}
                         itemDropCallback={itemDropCallback}
+                        toggleDisableButtonsCallback={toggleDisableButtonsCallback}
                          />)) : null } 
                         
                        

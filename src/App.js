@@ -35,10 +35,40 @@ class App extends React.Component {
             hasUndo: false,
             hasRedo: false,
             canClose: false,
-            canAdd: false,
+            canAdd: true,
             disableAllButtons: false,
         }
     }
+    keyPressFunction = (e) =>{
+        console.log("Key Pressing")
+        console.log(e)
+        if (e.ctrlKey && e.key === "y"){
+            
+            if (!this.state.disableAllButtons && this.state.hasRedo){
+                this.redo();
+            }
+        }
+        else if (e.ctrlKey && e.key === "z"){
+            console.log("fired")
+            console.log(e.ctrlKey)
+            console.log(e.keyCode)
+            console.log(this.state.disableAllButtons)
+            console.log(this.state.hasUndo)
+            if (!this.state.disableAllButtons && this.state.hasUndo){
+                this.undo();
+            }
+        }
+        // console.log(e.ctrlKey)
+        // console.log(e.keyCode)
+    }
+    componentDidMount(){
+        console.log("reached")
+        window.addEventListener("keydown", this.keyPressFunction);
+    }
+    componentWillUnmount(){
+        window.removeEventListener("keydown", this.keyPressFunction);
+    }
+
     sortKeyNamePairsByName = (keyNamePairs) => {
         keyNamePairs.sort((keyPair1, keyPair2) => {
             // GET THE LISTS
@@ -85,8 +115,10 @@ class App extends React.Component {
         });
     }
     renameItemRegular = (key,text) => {
+        
         let newCurrentListItems = [...this.state.currentList.items]
             //Rename the item
+            console.log("Text: ",text)
             for (let i = 0; i < newCurrentListItems.length; i++){
                 //console.log(key)
                 if (key === i){
@@ -99,8 +131,10 @@ class App extends React.Component {
                     ...prevState.currentList,
                     items: newCurrentListItems, 
                 },
-                sessionData: prevState.sessionData
+                sessionData: prevState.sessionData,
+                hasUndo: true
             }),() => {
+               
                 //Make sure changes are saved to Local Storage 
                 let list = this.db.queryGetList(this.state.currentList.key)
                 //console.log(list)
@@ -113,59 +147,45 @@ class App extends React.Component {
             
     }
     updateUndoRedoState = () =>{
-        this.hasRedo = this.tps.hasTransactionToRedo;
-        this.hasUndo = this.tps.hasTransactionToUndo;
+        this.setState(prevState => ({
+            hasRedo: this.tps.hasTransactionToRedo(),
+            hasUndo: this.tps.hasTransactionToUndo(),
+        }))
+        
+        // this.hasRedo = this.tps.hasTransactionToRedo;
+        // this.hasUndo = this.tps.hasTransactionToUndo;
     }
     redo = () =>{
+        console.log("Redoing!!!!!")
         if (this.tps.hasTransactionToRedo){
             this.tps.doTransaction();
         }
         this.updateUndoRedoState();
+        //Save changes to database 
+        let list = this.db.queryGetList(this.state.currentList.key);
+        this.db.mutationUpdateList(list);
+
     };
 
     undo = () =>{
+        //console.log("Undoing!!!!")
         if (this.tps.hasTransactionToUndo){
+            //console.log("Has Transaction to Undo So Undo")
             this.tps.undoTransaction();
         }
         this.updateUndoRedoState();
+        //console.log(this.tps)
+        //Save changes to database
+        let list = this.db.queryGetList(this.state.currentList.key);
+        this.db.mutationUpdateList(list);
     }
 
     renameItemCallback = (key, newName, oldName) => {
         //Find the one to remove (Copying stuff)
         if (newName !== oldName){
-            let newCurrentListItems = [...this.state.currentList.items]
-            //Rename the item
-            for (let i = 0; i < newCurrentListItems.length; i++){
-                //console.log(key)
-                if (key === i){
-                
-                    newCurrentListItems[i] = newName;
-                }
-            }
-
-            //console.log(newCurrentListItems);
-            //Alter the state so that the new currentList is being used
-            this.setState(prevState => ({
-                currentList: {
-                    ...prevState.currentList,
-                    items: newCurrentListItems, 
-                },
-                hasUndo: true,
-                sessionData: prevState.sessionData
-            }),() => {
-                //Make sure changes are saved to Local Storage 
-                let list = this.db.queryGetList(this.state.currentList.key)
-                //console.log(list)
-                list.items = newCurrentListItems
-                this.db.mutationUpdateList(list)
-                //Don't touch session data because it should be the same
-                //console.log(this.state)
-                //Add an undoable transaction
-                let renameTransaction = new ChangeItemTransaction(this.renameItemRegular,key,oldName,newName);
-                this.tps.addTransaction(renameTransaction);
-                console.log(this.tps)
-            })
-            
+            let renameTransaction = new ChangeItemTransaction(this.renameItemRegular,key,oldName,newName);
+            this.tps.addTransaction(renameTransaction);
+            console.log(this.tps)
             
         }
     }
@@ -203,39 +223,36 @@ class App extends React.Component {
         //Remove the element that we are currently Holding
         let removedArray = newCurrentListItems.splice(oldIndex,1);
         newCurrentListItems.splice(targetIndex,0,removedArray[0]);
+        console.log(newCurrentListItems)
         return newCurrentListItems;
+    
     }
+    itemSpliceCallback = (oldIndex,targetIndex) =>{
+        let newCurrentListItems = this.itemSpliceIntoPlace(oldIndex,targetIndex);
+        //console.log(...this.state.currentList)
+        this.setState(prevState => ({
+            currentList:{
+                ...prevState.currentList,
+                items: newCurrentListItems,
+                
+            },
+            hasUndo: true,
+            currentListHeldItem : null,
+            currentListOverItem : null,
+            sessionData: prevState.sessionData, 
+        }), () => {
+            let list = this.db.queryGetList(this.state.currentList.key)
+            list.items = newCurrentListItems
+            this.db.mutationUpdateList(list)
+        })
+    }
+
     itemDropCallback = () =>{
         if (this.state.currentListHeldItem !== this.state.currentListOverItem){
-            let newCurrentListItems = this.itemSpliceIntoPlace(this.state.currentListHeldItem,this.state.currentListOverItem)
-            // let newCurrentListItems = [...this.state.currentList.items];
-            // //Remove the element that we are currently Holding
-            // let removedArray = newCurrentListItems.splice(this.state.currentListHeldItem,1);
-            // //Replace at the position of where it's being held over 
-            // newCurrentListItems.splice(this.state.currentListOverItem,0,removedArray[0]);
-            this.setState(prevState => ({
-                currentList: {
-                    ...prevState.currentList,
-                    items: newCurrentListItems, 
-                },
-                currentListHeldItem : null,
-                currentListOverItem : null,
-                sessionData: prevState.sessionData, 
-                hasUndo: true,
-            }),() => {
-                //Make sure changes are saved to Local Storage 
-                //console.log(this.state)
-                let list = this.db.queryGetList(this.state.currentList.key)
-                // console.log(list)
-                list.items = newCurrentListItems
-                this.db.mutationUpdateList(list)
-
-                //Don't touch session data because it should be the same
-                //console.log(this.state)
-                let moveTransaction = new MoveItemTransaction(this.renameItemRegular,this.state.currentListHeldItem,this.state.currentListOverItem);
-                this.tps.addTransaction(moveTransaction);
-                console.log(this.tps)
-            })
+            let moveTransaction = new MoveItemTransaction(this.itemSpliceCallback,this.state.currentListHeldItem,this.state.currentListOverItem);
+            this.tps.addTransaction(moveTransaction);
+            //console.log(this.tps)
+        
         }
 
     }
@@ -278,11 +295,14 @@ class App extends React.Component {
     loadList = (key) => {
         let newCurrentList = this.db.queryGetList(key);
         this.setState(prevState => ({
+            canClose: true,
             currentList: newCurrentList,
             sessionData: prevState.sessionData
         }), () => {
             // ANY AFTER EFFECTS?
             // console.log(key)
+            // console.log("Can Close: ",this.state.canClose)
+            // console.log("Disable All Buttons: ", this.state.disableAllButtons)
             // console.log(this.state.currentList)
         });
     }
@@ -292,9 +312,16 @@ class App extends React.Component {
         this.setState(prevState => ({
             currentList: null,
             listKeyPairMarkedForDeletion : prevState.listKeyPairMarkedForDeletion,
-            sessionData: this.state.sessionData
+            sessionData: this.state.sessionData,
+            currentListHeldItem : null,
+            currentListOverItem : null,
+            hasUndo: false,
+            hasRedo: false,
+            canClose: false,
         }), () => {
             // ANY AFTER EFFECTS?
+            this.tps.clearAllTransactions();
+            
         });
     }
     deleteList = (listKNPair) => {
@@ -377,6 +404,13 @@ class App extends React.Component {
             });
         }
     }
+    //All buttons disabled when editing list names or editing item names 
+    toggleDisableButtons = () => {
+        this.setState(prevState =>({
+            disableAllButtons : !prevState.disableAllButtons
+        }))
+        // this.disableAllButtons = !this.disableAllButtons;
+    }
     // setListToDeleteCallback(listKNPair){
     //     this.setState(prevState => ({
     //         listToDelete: listKNPair,
@@ -388,10 +422,13 @@ class App extends React.Component {
                 <Banner 
                     title='Top 5 Lister'
                     closeCallback={this.closeCurrentList}
+                    undoCallback={this.undo}
+                    redoCallback={this.redo}
                     hasUndo= {this.state.hasUndo}
                     hasRedo= {this.state.hasRedo}
                     canClose= {this.state.canClose}
-                    disableAllButtons={this.state.disableAllButtons} />
+                    disableAllButtons={this.state.disableAllButtons} 
+                    />
                 <Sidebar
                     heading='Your Lists'
                     currentList={this.state.currentList}
@@ -400,6 +437,7 @@ class App extends React.Component {
                     deleteListCallback={this.deleteList}
                     loadListCallback={this.loadList}
                     renameListCallback={this.renameList}
+                    toggleDisableButtonsCallback={this.toggleDisableButtons}
                     //setListToDeleteCallback={this.setListToDeleteCallback}
                 />
                 <Workspace
@@ -412,6 +450,7 @@ class App extends React.Component {
                     itemDragOverCallback={this.itemDragOverCallback}
                     itemDragLeaveCallback={this.itemDragLeaveCallback}
                     itemDropCallback={this.itemDropCallback}
+                    toggleDisableButtonsCallback={this.toggleDisableButtons}
                     />
                 <Statusbar 
                     currentList={this.state.currentList} />

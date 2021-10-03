@@ -23,7 +23,7 @@ export default class MoveItem_Transaction extends jsTPS_Transaction {
     }
     
     undoTransaction() {
-        //this.model.moveItem(this.newItemIndex, this.oldItemIndex);
+        
         this.spliceCallback(this.newItemIndex,this.oldItemIndex)
     }
 }
