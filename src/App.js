@@ -1,6 +1,6 @@
 import React from 'react';
 import './App.css';
-
+import jsTPS from './jsTPS.js'
 // IMPORT DATA MANAGEMENT AND TRANSACTION STUFF
 import DBManager from './db/DBManager';
 
@@ -18,13 +18,17 @@ class App extends React.Component {
         // THIS WILL TALK TO LOCAL STORAGE
         this.db = new DBManager();
 
+        this.tps = new jsTPS();
+
         // GET THE SESSION DATA FROM OUR DATA MANAGER
         let loadedSessionData = this.db.queryGetSessionData();
 
         // SETUP THE INITIAL STATE
         this.state = {
             currentList : null,
-            sessionData : loadedSessionData
+            sessionData : loadedSessionData,
+            currentListHeldItem : null,
+            currentListOverItem : null
         }
     }
     sortKeyNamePairsByName = (keyNamePairs) => {
@@ -71,16 +75,97 @@ class App extends React.Component {
             this.db.mutationCreateList(newList);
         });
     }
-    renameItem = (key, newName) => {
+    renameItemCallback = (key, newName, oldName) => {
         //Find the one to remove (Copying stuff)
-        let newCurrentList = [...this.state.currentList]
+    
+        let newCurrentListItems = [...this.state.currentList.items]
         //Rename the item
-        for (let i = 0; i < newCurrentList.length; i++){
+        for (let i = 0; i < newCurrentListItems.length; i++){
+            //console.log(key)
             if (key === i){
-                newCurrentList[i] = newName;
+            
+                newCurrentListItems[i] = newName;
             }
         }
+
+        //console.log(newCurrentListItems);
+        //Alter the state so that the new currentList is being used
+        this.setState(prevState => ({
+            currentList: {
+                ...prevState.currentList,
+                items: newCurrentListItems, 
+            },
+            sessionData: prevState.sessionData
+        }),() => {
+            //Make sure changes are saved to Local Storage 
+            let list = this.db.queryGetList(this.state.currentList.key)
+            console.log(list)
+            list.items = newCurrentListItems
+            this.db.mutationUpdateList(list)
+            //Don't touch session data because it should be the same
+            //console.log(this.state)
+        })
+        
         //Add an undoable transaciton
+    }
+
+    itemHoldCallback = (itemKey) =>{
+        
+        this.setState(prevState => ({
+            currentList: prevState.currentList,
+            sessionData: prevState.sessionData,
+            currentListHeldItem: itemKey,
+            currentListOverItem: prevState.currentListOverItem
+        }))
+    }
+
+    itemDragOverCallback = (overItemKey) =>{
+        this.setState(prevState => ({
+            currentList: prevState.currentList,
+            sessionData: prevState.sessionData,
+            currentListHeldItem: prevState.currentListHeldItem,
+            currentListOverItem: overItemKey
+        }))
+    }
+
+    itemDragLeaveCallback = () =>{
+        this.setState(prevState => ({
+            currentList: prevState.currentList,
+            sessionData: prevState.sessionData,
+            currentListHeldItem: prevState.currentListHeldItem,
+            //Empty out the list over item if we leave it 
+            currentListOverItem: null
+        }))
+    }
+
+    itemDropCallback = () =>{
+        if (this.state.currentListHeldItem !== this.state.currentListOverItem){
+            let newCurrentListItems = [...this.state.currentList.items];
+            //Remove the element that we are currently Holding
+            let removedArray = newCurrentListItems.splice(this.state.currentListHeldItem,1);
+            //Replace at the position of where it's being held over 
+            newCurrentListItems.splice(this.state.currentListOverItem,0,removedArray[0]);
+            this.setState(prevState => ({
+                currentList: {
+                    ...prevState.currentList,
+                    items: newCurrentListItems, 
+                },
+                currentListHeldItem : null,
+                currentListOverItem : null,
+                sessionData: prevState.sessionData
+            }),() => {
+                //Make sure changes are saved to Local Storage 
+                //console.log(this.state)
+                let list = this.db.queryGetList(this.state.currentList.key)
+                // console.log(list)
+                list.items = newCurrentListItems
+                this.db.mutationUpdateList(list)
+
+                //Don't touch session data because it should be the same
+                //console.log(this.state)
+            })
+        }
+
     }
     renameList = (key, newName) => {
         let newKeyNamePairs = [...this.state.sessionData.keyNamePairs];
@@ -123,6 +208,8 @@ class App extends React.Component {
             sessionData: prevState.sessionData
         }), () => {
             // ANY AFTER EFFECTS?
+            // console.log(key)
+            // console.log(this.state.currentList)
         });
     }
 
@@ -170,7 +257,15 @@ class App extends React.Component {
                     renameListCallback={this.renameList}
                 />
                 <Workspace
-                    currentList={this.state.currentList} />
+                    currentList={this.state.currentList}
+                    //We need to pass this because it can be green
+                    currentListOverItem={this.state.currentListOverItem}
+                    currentListHeldItem={this.state.currentListHeldItem}
+                    renameItemCallback={this.renameItemCallback} 
+                    itemHoldCallback={this.itemHoldCallback}
+                    itemDragOverCallback={this.itemDragOverCallback}
+                    itemDragLeaveCallback={this.itemDragLeaveCallback}
+                    itemDropCallback={this.itemDropCallback}/>
                 <Statusbar 
                     currentList={this.state.currentList} />
                 <DeleteModal

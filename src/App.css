@@ -200,6 +200,7 @@ body {
   height:20%;
 }
 
+
 .item-number {
   justify-content: center;
   width:100%;
@@ -224,7 +225,9 @@ input {
 .top5-item-dragged-to {
   background-color: var(--swatch-accent);
 }
-
+/* .top5-item-drag-over{
+  background-color:rgb(126, 250, 126)
+} */
 .disabled {
   background-color: lightgray;
 }

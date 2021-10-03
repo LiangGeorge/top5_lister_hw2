@@ -4,7 +4,14 @@ import Item from "./Item";
 export default class Workspace extends React.Component {
     render() {
         const {
-            currentList
+            currentList,
+            renameItemCallback,
+            itemHoldCallback,
+            itemDragOverCallback,
+            itemDragLeaveCallback,
+            currentListOverItem,
+            itemDropCallback,
+            currentListHeldItem,
         } = this.props
         return (
             <div id="top5-workspace">
@@ -23,8 +30,21 @@ export default class Workspace extends React.Component {
                         <div className="item-number">5.</div>
                     </div>
                     <div id="edit-items">
-                        {currentList ? currentList.items.map((item,index) => (<Item key={index} itemName={item} />)) : null } 
-                        {/* {currentList ? console.log(currentList.items) : null }  */}
+                        {currentList ? currentList.items.map((item,index) => (
+                        <Item 
+                        key={index} 
+                        itemNum={index}
+                        itemName={item}
+                        currentListHeldItem={currentListHeldItem}
+                        currentListOverItem={currentListOverItem}
+                        renameItemCallback={renameItemCallback}
+                        itemHoldCallback={itemHoldCallback}
+                        itemDragOverCallback={itemDragOverCallback}
+                        itemDragLeaveCallback={itemDragLeaveCallback}
+                        itemDropCallback={itemDropCallback}
+                         />)) : null } 
+                        
+                       
                     </div>
 
                     

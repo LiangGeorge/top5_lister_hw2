@@ -18,6 +18,7 @@ export default class ListCard extends React.Component {
         }
     }
     handleLoadList = (event) => {
+        //console.log("Switching list")
         let listKey = event.target.id;
         if (listKey.startsWith("list-card-text-")) {
             listKey = listKey.substring("list-card-text-".length);
@@ -62,6 +63,7 @@ export default class ListCard extends React.Component {
                     onBlur={this.handleBlur}
                     onChange={this.handleUpdate}
                     defaultValue={keyNamePair.name}
+                    autoFocus
                 />)
         }
         else {
