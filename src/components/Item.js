@@ -4,10 +4,10 @@ import React from "react";
 export default class Item extends React.Component{
     constructor(props){
         super(props);
-        //console.log(props)
+        
 
         this.state = {
-          
+            currentList: this.props.currentList,
             text: this.props.itemName,
             editActive: false,
         };
@@ -31,11 +31,15 @@ export default class Item extends React.Component{
 
     }
     handleOnDrop = (event)=>{
-        this.props.toggleDisableButtonsCallback();
+        //this.props.toggleDisableButtonsCallback();
+        
         event.preventDefault();
         event.stopPropagation();
         //console.log("Dropped");
         this.props.itemDropCallback();
+        // console.log(this.props.currentList.items)
+        // console.log(this.props.currentList.items)
+        // console.log(this.props.currentList.items)
     }
     handleOnDragLeave = (event,itemNum)=>{
         event.preventDefault();
@@ -55,7 +59,7 @@ export default class Item extends React.Component{
 
     //Preserve the state at the top level unless absolutely necessary to change aka pressing Enter or onBlur 
     handleUpdate = (event) => {
-        this.setState({ text: event.target.value });
+        this.setState({ text: event.target.value },()=>{console.log(this.state)});
     }
 
     handleKeyPress = (event) => {
@@ -64,6 +68,7 @@ export default class Item extends React.Component{
         }
     }
     handleBlur = () => {
+        //console.log(this)
         let key = this.props.itemNum;
         //console.log(this.state)
         let textValue = this.state.text;
@@ -75,6 +80,7 @@ export default class Item extends React.Component{
     }
 
     render(){
+        // console.log(this.props)
         if (this.state.editActive){
             return (
                 <input className="top5-item" type="text"
@@ -106,6 +112,8 @@ export default class Item extends React.Component{
                     onDrag={(e)=>this.handleOnDrag(e,this.props.itemNum)}
                     onDragOver={(e) => this.handleOnDragOver(e,this.props.itemNum)}
                     onDragStart={() => this.props.toggleDisableButtonsCallback()}
+                    onDragEnd={() => this.props.toggleDisableButtonsCallback()}
+                    // onDrop={() => this.props.toggleDisableButtonsCallback()}
                     >
                     {this.props.itemName}
                     </div>

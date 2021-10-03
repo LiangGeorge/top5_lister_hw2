@@ -40,8 +40,8 @@ class App extends React.Component {
         }
     }
     keyPressFunction = (e) =>{
-        console.log("Key Pressing")
-        console.log(e)
+        // console.log("Key Pressing")
+        // console.log(e)
         if (e.ctrlKey && e.key === "y"){
             
             if (!this.state.disableAllButtons && this.state.hasRedo){
@@ -49,11 +49,11 @@ class App extends React.Component {
             }
         }
         else if (e.ctrlKey && e.key === "z"){
-            console.log("fired")
-            console.log(e.ctrlKey)
-            console.log(e.keyCode)
-            console.log(this.state.disableAllButtons)
-            console.log(this.state.hasUndo)
+            // console.log("fired")
+            // console.log(e.ctrlKey)
+            // console.log(e.keyCode)
+            // console.log(this.state.disableAllButtons)
+            // console.log(this.state.hasUndo)
             if (!this.state.disableAllButtons && this.state.hasUndo){
                 this.undo();
             }
@@ -156,7 +156,7 @@ class App extends React.Component {
         // this.hasUndo = this.tps.hasTransactionToUndo;
     }
     redo = () =>{
-        console.log("Redoing!!!!!")
+        //console.log("Redoing!!!!!")
         if (this.tps.hasTransactionToRedo){
             this.tps.doTransaction();
         }
@@ -223,7 +223,7 @@ class App extends React.Component {
         //Remove the element that we are currently Holding
         let removedArray = newCurrentListItems.splice(oldIndex,1);
         newCurrentListItems.splice(targetIndex,0,removedArray[0]);
-        console.log(newCurrentListItems)
+        //console.log(newCurrentListItems)
         return newCurrentListItems;
     
     }
@@ -241,6 +241,7 @@ class App extends React.Component {
             currentListOverItem : null,
             sessionData: prevState.sessionData, 
         }), () => {
+            //console.log("CURRENT STATE",this.state.currentList.items)
             let list = this.db.queryGetList(this.state.currentList.key)
             list.items = newCurrentListItems
             this.db.mutationUpdateList(list)
@@ -257,39 +258,41 @@ class App extends React.Component {
 
     }
     renameList = (key, newName) => {
-        let newKeyNamePairs = [...this.state.sessionData.keyNamePairs];
-        // NOW GO THROUGH THE ARRAY AND FIND THE ONE TO RENAME
-        for (let i = 0; i < newKeyNamePairs.length; i++) {
-            let pair = newKeyNamePairs[i];
-            if (pair.key === key) {
-                pair.name = newName;
+        if (this.state.currentList.name !== newName){
+            let newKeyNamePairs = [...this.state.sessionData.keyNamePairs];
+            // NOW GO THROUGH THE ARRAY AND FIND THE ONE TO RENAME
+            for (let i = 0; i < newKeyNamePairs.length; i++) {
+                let pair = newKeyNamePairs[i];
+                if (pair.key === key) {
+                    pair.name = newName;
+                }
             }
-        }
-        this.sortKeyNamePairsByName(newKeyNamePairs);
+            this.sortKeyNamePairsByName(newKeyNamePairs);
 
-        // WE MAY HAVE TO RENAME THE currentList
-        let currentList = this.state.currentList;
-        if (currentList.key === key) {
-            currentList.name = newName;
-        }
-
-        this.setState(prevState => ({
-            currentList: prevState.currentList,
-            sessionData: {
-                nextKey: prevState.sessionData.nextKey,
-                counter: prevState.sessionData.counter,
-                keyNamePairs: newKeyNamePairs
+            // WE MAY HAVE TO RENAME THE currentList
+            let currentList = this.state.currentList;
+            if (currentList.key === key) {
+                currentList.name = newName;
             }
-        }), () => {
-            // AN AFTER EFFECT IS THAT WE NEED TO MAKE SURE
-            // THE TRANSACTION STACK IS CLEARED
-            let list = this.db.queryGetList(key);
-            list.name = newName;
-            this.db.mutationUpdateList(list);
-            this.db.mutationUpdateSessionData(this.state.sessionData);
-            this.tps.clearAllTransactions();
-            this.updateUndoRedoState();
-        });
+
+            this.setState(prevState => ({
+                currentList: prevState.currentList,
+                sessionData: {
+                    nextKey: prevState.sessionData.nextKey,
+                    counter: prevState.sessionData.counter,
+                    keyNamePairs: newKeyNamePairs
+                }
+            }), () => {
+                // AN AFTER EFFECT IS THAT WE NEED TO MAKE SURE
+                // THE TRANSACTION STACK IS CLEARED
+                let list = this.db.queryGetList(key);
+                list.name = newName;
+                this.db.mutationUpdateList(list);
+                this.db.mutationUpdateSessionData(this.state.sessionData);
+                this.tps.clearAllTransactions();
+                this.updateUndoRedoState();
+            });
+        }
     }
     // THIS FUNCTION BEGINS THE PROCESS OF LOADING A LIST FOR EDITING
     loadList = (key) => {

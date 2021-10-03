@@ -14,6 +14,7 @@ export default class Workspace extends React.Component {
             currentListHeldItem,
             toggleDisableButtonsCallback,
         } = this.props
+        //console.log("LOGGED WORKSPACE",currentList)
         return (
             <div id="top5-workspace">
                 <div id="workspace-edit">
@@ -33,9 +34,10 @@ export default class Workspace extends React.Component {
                     <div id="edit-items">
                         {currentList ? currentList.items.map((item,index) => (
                         <Item 
-                        key={index} 
+                        key={item} 
                         itemNum={index}
                         itemName={item}
+                        currentList={currentList}
                         currentListHeldItem={currentListHeldItem}
                         currentListOverItem={currentListOverItem}
                         renameItemCallback={renameItemCallback}

@@ -30,6 +30,7 @@ export default class ListCard extends React.Component {
         this.props.deleteListCallback(this.props.keyNamePair);
     }
     handleToggleEdit = (event) => {
+        this.props.toggleDisableButtonsCallback();
         this.setState({
             editActive: !this.state.editActive
         });
