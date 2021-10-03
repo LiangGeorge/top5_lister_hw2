@@ -50,6 +50,9 @@ export default class ListCard extends React.Component {
         this.handleToggleEdit();
     }
 
+    // handleButton = (listKey) =>{
+    //     this.props.setListToDeleteCallback(listKey);
+    // }
     render() {
         const { keyNamePair, selected } = this.props;
 

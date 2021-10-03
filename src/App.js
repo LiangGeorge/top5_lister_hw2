@@ -28,7 +28,8 @@ class App extends React.Component {
             currentList : null,
             sessionData : loadedSessionData,
             currentListHeldItem : null,
-            currentListOverItem : null
+            currentListOverItem : null,
+            listToDelete: null,
         }
     }
     sortKeyNamePairsByName = (keyNamePairs) => {
@@ -77,36 +78,37 @@ class App extends React.Component {
     }
     renameItemCallback = (key, newName, oldName) => {
         //Find the one to remove (Copying stuff)
-    
-        let newCurrentListItems = [...this.state.currentList.items]
-        //Rename the item
-        for (let i = 0; i < newCurrentListItems.length; i++){
-            //console.log(key)
-            if (key === i){
-            
-                newCurrentListItems[i] = newName;
+        if (newName !== oldName){
+            let newCurrentListItems = [...this.state.currentList.items]
+            //Rename the item
+            for (let i = 0; i < newCurrentListItems.length; i++){
+                //console.log(key)
+                if (key === i){
+                
+                    newCurrentListItems[i] = newName;
+                }
             }
-        }
 
-        //console.log(newCurrentListItems);
-        //Alter the state so that the new currentList is being used
-        this.setState(prevState => ({
-            currentList: {
-                ...prevState.currentList,
-                items: newCurrentListItems, 
-            },
-            sessionData: prevState.sessionData
-        }),() => {
-            //Make sure changes are saved to Local Storage 
-            let list = this.db.queryGetList(this.state.currentList.key)
-            console.log(list)
-            list.items = newCurrentListItems
-            this.db.mutationUpdateList(list)
-            //Don't touch session data because it should be the same
-            //console.log(this.state)
-        })
-        
-        //Add an undoable transaciton
+            //console.log(newCurrentListItems);
+            //Alter the state so that the new currentList is being used
+            this.setState(prevState => ({
+                currentList: {
+                    ...prevState.currentList,
+                    items: newCurrentListItems, 
+                },
+                sessionData: prevState.sessionData
+            }),() => {
+                //Make sure changes are saved to Local Storage 
+                let list = this.db.queryGetList(this.state.currentList.key)
+                console.log(list)
+                list.items = newCurrentListItems
+                this.db.mutationUpdateList(list)
+                //Don't touch session data because it should be the same
+                //console.log(this.state)
+            })
+            
+            //Add an undoable transaciton
+        }
     }
 
     itemHoldCallback = (itemKey) =>{
@@ -223,11 +225,14 @@ class App extends React.Component {
             // ANY AFTER EFFECTS?
         });
     }
-    deleteList = () => {
+    deleteList = (listKNPair) => {
         // SOMEHOW YOU ARE GOING TO HAVE TO FIGURE OUT
         // WHICH LIST IT IS THAT THE USER WANTS TO
         // DELETE AND MAKE THAT CONNECTION SO THAT THE
         // NAME PROPERLY DISPLAYS INSIDE THE MODAL
+        this.setState(prevState =>({
+            listToDelete: listKNPair
+        }))
         this.showDeleteListModal();
     }
     // THIS FUNCTION SHOWS THE MODAL FOR PROMPTING THE USER
@@ -241,6 +246,70 @@ class App extends React.Component {
         let modal = document.getElementById("delete-modal");
         modal.classList.remove("is-visible");
     }
+
+    executeDelete = () =>{
+        let newKeyNamePairs = [...this.state.sessionData.keyNamePairs];
+        console.log(this.state.listToDelete)
+        let indexToRemove = null;
+        
+        for (let i = 0; i < newKeyNamePairs.length; i++) {
+            let pair = newKeyNamePairs[i];
+            if (pair.key === this.state.listToDelete.key) {
+                indexToRemove = i
+            }
+        }
+
+        //Decrement the keys of every element after the indexToRemove
+        for(let i = indexToRemove + 1; i < newKeyNamePairs.length;i++){
+            newKeyNamePairs[i].key -= 1
+        }
+
+        //Remove the keyname pair that isn't going to be there
+        newKeyNamePairs.splice(indexToRemove,1);
+        console.log(newKeyNamePairs)
+        if (this.state.currentList !== null && this.state.currentList.key === this.state.listToDelete.key){
+            this.setState(prevState => ({
+                currentList: null,
+                sessionData: {
+                    nextKey: prevState.sessionData.nextKey - 1,
+                    counter: prevState.sessionData.counter - 1,
+                    keyNamePairs: newKeyNamePairs
+                }
+            }), () => {
+                // AN AFTER EFFECT IS THAT WE NEED TO MAKE SURE
+                // THE TRANSACTION STACK IS CLEARED
+
+                // let list = this.db.queryGetList(key);
+                // list.name = newName;
+                // this.db.mutationUpdateList(list);
+                
+                this.db.mutationUpdateSessionData(this.state.sessionData);
+            });
+        }else{
+            this.setState(prevState => ({
+                currentList: prevState.currentList,
+                sessionData: {
+                    nextKey: prevState.sessionData.nextKey - 1,
+                    counter: prevState.sessionData.counter - 1,
+                    keyNamePairs: newKeyNamePairs
+                }
+            }), () => {
+                // AN AFTER EFFECT IS THAT WE NEED TO MAKE SURE
+                // THE TRANSACTION STACK IS CLEARED
+
+                // let list = this.db.queryGetList(key);
+                // list.name = newName;
+                // this.db.mutationUpdateList(list);
+                
+                this.db.mutationUpdateSessionData(this.state.sessionData);
+            });
+        }
+    }
+    // setListToDeleteCallback(listKNPair){
+    //     this.setState(prevState => ({
+    //         listToDelete: listKNPair,
+    //     }))
+    // }
     render() {
         return (
             <div id="app-root">
@@ -255,6 +324,7 @@ class App extends React.Component {
                     deleteListCallback={this.deleteList}
                     loadListCallback={this.loadList}
                     renameListCallback={this.renameList}
+                    //setListToDeleteCallback={this.setListToDeleteCallback}
                 />
                 <Workspace
                     currentList={this.state.currentList}
@@ -265,11 +335,14 @@ class App extends React.Component {
                     itemHoldCallback={this.itemHoldCallback}
                     itemDragOverCallback={this.itemDragOverCallback}
                     itemDragLeaveCallback={this.itemDragLeaveCallback}
-                    itemDropCallback={this.itemDropCallback}/>
+                    itemDropCallback={this.itemDropCallback}
+                    />
                 <Statusbar 
                     currentList={this.state.currentList} />
                 <DeleteModal
                     hideDeleteListModalCallback={this.hideDeleteListModal}
+                    listToDelete={this.state.listToDelete}
+                    executeDeleteCallback={this.executeDelete}
                 />
             </div>
         );
