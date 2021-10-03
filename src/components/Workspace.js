@@ -32,9 +32,10 @@ export default class Workspace extends React.Component {
                         <div className="item-number">5.</div>
                     </div>
                     <div id="edit-items">
+                        {}
                         {currentList ? currentList.items.map((item,index) => (
                         <Item 
-                        key={item} 
+                        key={item + index} 
                         itemNum={index}
                         itemName={item}
                         currentList={currentList}

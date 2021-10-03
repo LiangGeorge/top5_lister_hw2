@@ -111,9 +111,9 @@ export default class Item extends React.Component{
                     onDoubleClick={()=>this.handleDoubleClick()}
                     onDrag={(e)=>this.handleOnDrag(e,this.props.itemNum)}
                     onDragOver={(e) => this.handleOnDragOver(e,this.props.itemNum)}
-                    onDragStart={() => this.props.toggleDisableButtonsCallback()}
-                    onDragEnd={() => this.props.toggleDisableButtonsCallback()}
-                    // onDrop={() => this.props.toggleDisableButtonsCallback()}
+                    // onDragStart={() => this.props.toggleDisableButtonsCallback()}
+                    // onDragEnd={() => this.props.toggleDisableButtonsCallback()}
+                    //onDrop={() => this.props.toggleDisableButtonsCallback()}
                     >
                     {this.props.itemName}
                     </div>

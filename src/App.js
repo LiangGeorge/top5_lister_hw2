@@ -62,7 +62,7 @@ class App extends React.Component {
         // console.log(e.keyCode)
     }
     componentDidMount(){
-        console.log("reached")
+        //console.log("reached")
         window.addEventListener("keydown", this.keyPressFunction);
     }
     componentWillUnmount(){
@@ -118,7 +118,7 @@ class App extends React.Component {
         
         let newCurrentListItems = [...this.state.currentList.items]
             //Rename the item
-            console.log("Text: ",text)
+            // console.log("Text: ",text)
             for (let i = 0; i < newCurrentListItems.length; i++){
                 //console.log(key)
                 if (key === i){
@@ -302,6 +302,8 @@ class App extends React.Component {
             currentList: newCurrentList,
             sessionData: prevState.sessionData
         }), () => {
+            this.tps.clearAllTransactions();
+            this.updateUndoRedoState();
             // ANY AFTER EFFECTS?
             // console.log(key)
             // console.log("Can Close: ",this.state.canClose)
@@ -368,7 +370,7 @@ class App extends React.Component {
 
         //Remove the keyname pair that isn't going to be there
         newKeyNamePairs.splice(indexToRemove,1);
-        console.log(newKeyNamePairs)
+        //console.log(newKeyNamePairs)
         if (this.state.currentList !== null && this.state.currentList.key === this.state.listToDelete.key){
             this.setState(prevState => ({
                 currentList: null,
@@ -409,6 +411,8 @@ class App extends React.Component {
     }
     //All buttons disabled when editing list names or editing item names 
     toggleDisableButtons = () => {
+        // console.log("Test")
+        // console.log(this.state.canAdd)
         this.setState(prevState =>({
             disableAllButtons : !prevState.disableAllButtons
         }))
@@ -441,6 +445,8 @@ class App extends React.Component {
                     loadListCallback={this.loadList}
                     renameListCallback={this.renameList}
                     toggleDisableButtonsCallback={this.toggleDisableButtons}
+                    disableAllButtons={this.state.disableAllButtons}
+                    canAdd = {this.state.canAdd}
                     //setListToDeleteCallback={this.setListToDeleteCallback}
                 />
                 <Workspace
