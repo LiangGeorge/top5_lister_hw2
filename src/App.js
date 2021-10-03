@@ -341,7 +341,7 @@ class App extends React.Component {
                     currentList={this.state.currentList} />
                 <DeleteModal
                     hideDeleteListModalCallback={this.hideDeleteListModal}
-                    listToDelete={this.state.listToDelete}
+                    listKeyPair={this.state.listToDelete}
                     executeDeleteCallback={this.executeDelete}
                 />
             </div>
