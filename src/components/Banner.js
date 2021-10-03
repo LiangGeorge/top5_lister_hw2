@@ -7,7 +7,10 @@ export default class Banner extends React.Component {
         return (
             <div id="top5-banner">
                 {title}
-                <EditToolbar />
+                <EditToolbar  hasUndo= {this.props.hasUndo}
+                    hasRedo= {this.props.hasRedo}
+                    canClose= {this.props.canClose}
+                    disableAllButtons={this.props.disableAllButtons} />
             </div>
         );
     }

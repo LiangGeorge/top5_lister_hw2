@@ -32,6 +32,11 @@ class App extends React.Component {
             currentListHeldItem : null,
             currentListOverItem : null,
             listToDelete: null,
+            hasUndo: false,
+            hasRedo: false,
+            canClose: false,
+            canAdd: false,
+            disableAllButtons: false,
         }
     }
     sortKeyNamePairsByName = (keyNamePairs) => {
@@ -76,6 +81,7 @@ class App extends React.Component {
             // PUTTING THIS NEW LIST IN PERMANENT STORAGE
             // IS AN AFTER EFFECT
             this.db.mutationCreateList(newList);
+            this.db.mutationUpdateSessionData(this.state.sessionData);
         });
     }
     renameItemRegular = (key,text) => {
@@ -106,6 +112,24 @@ class App extends React.Component {
             })
             
     }
+    updateUndoRedoState = () =>{
+        this.hasRedo = this.tps.hasTransactionToRedo;
+        this.hasUndo = this.tps.hasTransactionToUndo;
+    }
+    redo = () =>{
+        if (this.tps.hasTransactionToRedo){
+            this.tps.doTransaction();
+        }
+        this.updateUndoRedoState();
+    };
+
+    undo = () =>{
+        if (this.tps.hasTransactionToUndo){
+            this.tps.undoTransaction();
+        }
+        this.updateUndoRedoState();
+    }
+
     renameItemCallback = (key, newName, oldName) => {
         //Find the one to remove (Copying stuff)
         if (newName !== oldName){
@@ -126,6 +150,7 @@ class App extends React.Component {
                     ...prevState.currentList,
                     items: newCurrentListItems, 
                 },
+                hasUndo: true,
                 sessionData: prevState.sessionData
             }),() => {
                 //Make sure changes are saved to Local Storage 
@@ -195,7 +220,8 @@ class App extends React.Component {
                 },
                 currentListHeldItem : null,
                 currentListOverItem : null,
-                sessionData: prevState.sessionData
+                sessionData: prevState.sessionData, 
+                hasUndo: true,
             }),() => {
                 //Make sure changes are saved to Local Storage 
                 //console.log(this.state)
@@ -245,6 +271,7 @@ class App extends React.Component {
             this.db.mutationUpdateList(list);
             this.db.mutationUpdateSessionData(this.state.sessionData);
             this.tps.clearAllTransactions();
+            this.updateUndoRedoState();
         });
     }
     // THIS FUNCTION BEGINS THE PROCESS OF LOADING A LIST FOR EDITING
@@ -360,7 +387,11 @@ class App extends React.Component {
             <div id="app-root">
                 <Banner 
                     title='Top 5 Lister'
-                    closeCallback={this.closeCurrentList} />
+                    closeCallback={this.closeCurrentList}
+                    hasUndo= {this.state.hasUndo}
+                    hasRedo= {this.state.hasRedo}
+                    canClose= {this.state.canClose}
+                    disableAllButtons={this.state.disableAllButtons} />
                 <Sidebar
                     heading='Your Lists'
                     currentList={this.state.currentList}

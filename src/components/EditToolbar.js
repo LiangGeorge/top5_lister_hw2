@@ -2,6 +2,12 @@ import React from "react";
 
 export default class EditToolbar extends React.Component {
     render() {
+        if (this.props.disableAllButtons){
+
+        }
+        else{
+            // let undoButton = (this.props.hasUndo) :
+        }
         return (
             <div id="edit-toolbar">
                 <div 
