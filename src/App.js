@@ -374,10 +374,11 @@ class App extends React.Component {
         if (this.state.currentList !== null && this.state.currentList.key === this.state.listToDelete.key){
             this.setState(prevState => ({
                 currentList: null,
+                canClose: false,
                 sessionData: {
                     nextKey: prevState.sessionData.nextKey - 1,
                     counter: prevState.sessionData.counter - 1,
-                    keyNamePairs: newKeyNamePairs
+                    keyNamePairs: newKeyNamePairs,
                 }
             }), () => {
                 // AN AFTER EFFECT IS THAT WE NEED TO MAKE SURE
