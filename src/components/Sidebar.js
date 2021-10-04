@@ -19,6 +19,7 @@ export default class Sidebar extends React.Component {
             <div id="top5-sidebar">
                 <div id="sidebar-heading">
                     <input 
+                        disabled={((disableAllButtons) ?  true : (canAdd ? false: true))}
                         type="button" 
                         id="add-list-button" 
                         onClick={createNewListCallback}

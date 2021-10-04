@@ -102,6 +102,7 @@ class App extends React.Component {
         // SHOULD BE DONE VIA ITS CALLBACK
         this.setState(prevState => ({
             currentList: newList,
+            canAdd: false,
             sessionData: {
                 nextKey: prevState.sessionData.nextKey + 1,
                 counter: prevState.sessionData.counter + 1,
@@ -299,6 +300,7 @@ class App extends React.Component {
         let newCurrentList = this.db.queryGetList(key);
         this.setState(prevState => ({
             canClose: true,
+            canAdd: false,
             currentList: newCurrentList,
             sessionData: prevState.sessionData
         }), () => {
@@ -323,6 +325,7 @@ class App extends React.Component {
             hasUndo: false,
             hasRedo: false,
             canClose: false,
+            canAdd: true,
         }), () => {
             // ANY AFTER EFFECTS?
             this.tps.clearAllTransactions();
